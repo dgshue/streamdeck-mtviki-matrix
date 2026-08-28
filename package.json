@@ -1,0 +1,24 @@
+{
+  "name": "streamdeck-mtviki-matrix",
+  "version": "1.0.0",
+  "description": "Stream Deck plugin for MT-VIKI 4K HDMI matrix switches (LAN/web-GUI protocol)",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.dgshue.mtviki\""
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.1",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-typescript": "^12.1.1",
+    "@tsconfig/node20": "^20.1.4",
+    "@types/node": "^20.16.0",
+    "rollup": "^4.24.0",
+    "tslib": "^2.8.0",
+    "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "@elgato/streamdeck": "^1.0.0"
+  }
+}

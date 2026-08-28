@@ -1,0 +1,12 @@
+{
+  "extends": "@tsconfig/node20/tsconfig.json",
+  "include": ["src/**/*"],
+  "compilerOptions": {
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+    "sourceMap": true,
+    "rootDir": "src",
+    "noImplicitOverride": true,
+    "strict": true
+  }
+}

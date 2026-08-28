@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<script src="sdpi-components.js"></script>
+	</head>
+	<body>
+		<sdpi-item label="Input">
+			<sdpi-select setting="input" default="1">
+				<option value="1">Input 1</option>
+				<option value="2">Input 2</option>
+				<option value="3">Input 3</option>
+				<option value="4">Input 4</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Outputs">
+			<sdpi-textfield setting="outputs" placeholder="1,2"></sdpi-textfield>
+		</sdpi-item>
+
+		<details>
+			<summary>Matrix connection (shared by all keys)</summary>
+			<sdpi-item label="Host">
+				<sdpi-textfield global setting="host" placeholder="192.168.2.200"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Username">
+				<sdpi-textfield global setting="username" placeholder="admin"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Password">
+				<sdpi-password global setting="password" placeholder="admin"></sdpi-password>
+			</sdpi-item>
+		</details>
+
+		<p class="sdpi-info">
+			Comma separated output numbers, e.g. <code>1,3</code> to send this input
+			to outputs 1 and 3.
+		</p>
+	</body>
+</html>

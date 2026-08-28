@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<script src="sdpi-components.js"></script>
+	</head>
+	<body>
+		<sdpi-item label="Label">
+			<sdpi-textfield setting="label" placeholder="LEFT" maxlength="8"></sdpi-textfield>
+		</sdpi-item>
+
+		<sdpi-item label="Output A">
+			<sdpi-select setting="outputA" default="1">
+				<option value="1">Output 1</option>
+				<option value="2">Output 2</option>
+				<option value="3">Output 3</option>
+				<option value="4">Output 4</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Output B">
+			<sdpi-select setting="outputB" default="2">
+				<option value="1">Output 1</option>
+				<option value="2">Output 2</option>
+				<option value="3">Output 3</option>
+				<option value="4">Output 4</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Refresh">
+			<sdpi-select setting="pollSeconds" default="5">
+				<option value="0">Off</option>
+				<option value="3">Every 3s</option>
+				<option value="5">Every 5s</option>
+				<option value="15">Every 15s</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<details>
+			<summary>Matrix connection (shared by all keys)</summary>
+			<sdpi-item label="Host">
+				<sdpi-textfield global setting="host" placeholder="192.168.2.200"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Username">
+				<sdpi-textfield global setting="username" placeholder="admin"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Password">
+				<sdpi-password global setting="password" placeholder="admin"></sdpi-password>
+			</sdpi-item>
+		</details>
+
+		<p class="sdpi-info">
+			Press swaps the sources on the two outputs. The key shows
+			<em>input on A / input on B</em>.
+		</p>
+	</body>
+</html>
