@@ -142,6 +142,26 @@ function identityArt(c, withBg) {
 	}
 }
 
+/** A 2x2 of screens with two dark: "this arrangement, some blanked". */
+function layoutArt(c, withBg) {
+	if (withBg) paint(c, roundRect(0, 0, 1, 1, 0.14), BG);
+	const cells = [
+		[0.1, 0.12, 0.47, 0.46, true],
+		[0.53, 0.12, 0.9, 0.46, false],
+		[0.1, 0.54, 0.47, 0.88, true],
+		[0.53, 0.54, 0.9, 0.88, false],
+	];
+	for (const [x0, y0, x1, y1, lit] of cells) {
+		if (lit) {
+			paint(c, roundRect(x0, y0, x1, y1, 0.04), ACCENT);
+		} else {
+			// Outline only, to read as a screen that is off rather than missing.
+			paint(c, roundRect(x0, y0, x1, y1, 0.04), [90, 96, 104]);
+			paint(c, roundRect(x0 + 0.045, y0 + 0.045, x1 - 0.045, y1 - 0.045, 0.02), BG);
+		}
+	}
+}
+
 const jobs = [
 	["com.dgshue.mtviki.sdPlugin/imgs/plugin/marketplace.png", 288, swapArt, true],
 	["com.dgshue.mtviki.sdPlugin/imgs/plugin/category-icon.png", 28, swapArt, false],
@@ -150,6 +170,10 @@ const jobs = [
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/swap/icon@2x.png", 40, swapArt, false],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/swap/key.png", 72, swapArt, true],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/swap/key@2x.png", 144, swapArt, true],
+	["com.dgshue.mtviki.sdPlugin/imgs/actions/layout/icon.png", 20, layoutArt, false],
+	["com.dgshue.mtviki.sdPlugin/imgs/actions/layout/icon@2x.png", 40, layoutArt, false],
+	["com.dgshue.mtviki.sdPlugin/imgs/actions/layout/key.png", 72, layoutArt, true],
+	["com.dgshue.mtviki.sdPlugin/imgs/actions/layout/key@2x.png", 144, layoutArt, true],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/identity/icon.png", 20, identityArt, false],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/identity/icon@2x.png", 40, identityArt, false],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/identity/key.png", 72, identityArt, true],

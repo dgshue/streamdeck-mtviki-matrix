@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<script src="sdpi-components.js"></script>
+	</head>
+	<body>
+		<sdpi-item label="Label">
+			<sdpi-textfield setting="label" placeholder="FOCUS" maxlength="8"></sdpi-textfield>
+		</sdpi-item>
+
+		<sdpi-item label="Screen 1">
+			<sdpi-select setting="out1" default="keep">
+				<option value="keep">Leave alone</option>
+				<option value="off">Blank (off)</option>
+				<option value="1">Input 1</option>
+				<option value="2">Input 2</option>
+				<option value="3">Input 3</option>
+				<option value="4">Input 4</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Screen 2">
+			<sdpi-select setting="out2" default="keep">
+				<option value="keep">Leave alone</option>
+				<option value="off">Blank (off)</option>
+				<option value="1">Input 1</option>
+				<option value="2">Input 2</option>
+				<option value="3">Input 3</option>
+				<option value="4">Input 4</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Screen 3">
+			<sdpi-select setting="out3" default="keep">
+				<option value="keep">Leave alone</option>
+				<option value="off">Blank (off)</option>
+				<option value="1">Input 1</option>
+				<option value="2">Input 2</option>
+				<option value="3">Input 3</option>
+				<option value="4">Input 4</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Screen 4">
+			<sdpi-select setting="out4" default="keep">
+				<option value="keep">Leave alone</option>
+				<option value="off">Blank (off)</option>
+				<option value="1">Input 1</option>
+				<option value="2">Input 2</option>
+				<option value="3">Input 3</option>
+				<option value="4">Input 4</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="Refresh">
+			<sdpi-select setting="pollSeconds" default="5">
+				<option value="0">Off</option>
+				<option value="3">Every 3s</option>
+				<option value="5">Every 5s</option>
+				<option value="15">Every 15s</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<details>
+			<summary>Matrix connection (shared by all keys)</summary>
+			<sdpi-item label="Host">
+				<sdpi-textfield global setting="host" placeholder="192.168.2.200"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Username">
+				<sdpi-textfield global setting="username" placeholder="admin"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Password">
+				<sdpi-password global setting="password" placeholder="admin"></sdpi-password>
+			</sdpi-item>
+		</details>
+
+		<p class="sdpi-info">
+			Applies all four screens in one press. The key shows the live map, with
+			<code>&middot;</code> for a blanked screen. <b>Reset to Default</b> lights
+			every screen again.
+		</p>
+	</body>
+</html>

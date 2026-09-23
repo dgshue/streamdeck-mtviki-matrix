@@ -199,6 +199,10 @@ export function resetIdentity(conn: MatrixConnection): Promise<number[]> {
 			return [];
 		}
 
+		// SWOTO only restores routing, so a screen blanked by a layout would stay
+		// dark. "Back to default" has to mean every screen is lit again too.
+		await lightAllInline(conn, known);
+
 		// The resulting map is exactly known, so record it instead of forcing a
 		// read inside the settle window.
 		const routes = Array.from({ length: known }, (_, i) => i + 1);
@@ -241,6 +245,123 @@ export function swapOutputs(conn: MatrixConnection, outA: number, outB: number):
 		routeCache.set(key(conn), { at: Date.now(), routes: updated });
 		return updated;
 	});
+}
+
+/**
+ * What a layout wants for one output: an input number to show, "off" to blank
+ * the screen, or null to leave that output exactly as it is.
+ */
+export type OutputTarget = number | "off" | null;
+
+/** Enable state per output, cached so a layout only writes what actually changes. */
+const enableCache = new Map<string, boolean[]>();
+
+/**
+ * Reads which outputs are currently lit. Blanking is separate from routing on
+ * this device: a disabled output keeps its source but stops driving the screen.
+ */
+export async function getOutputEnabled(conn: MatrixConnection, outputs: number): Promise<boolean[]> {
+	await awaitSettled(conn);
+	const state: boolean[] = [];
+	for (let out = 1; out <= outputs; out++) {
+		const data = await send(conn, "GETNVRAM", { FIELD: `Output${out}Enable` });
+		state.push(data[`Output${out}Enable`] === "1");
+	}
+	enableCache.set(key(conn), state);
+	return state;
+}
+
+/** Blanks (false) or lights (true) a single output. */
+export function setOutputEnabled(conn: MatrixConnection, out: number, enabled: boolean): Promise<void> {
+	return enqueue(conn, async () => {
+		await assertOk(conn, `SetOutput ${out} ${enabled ? 1 : 0}`);
+		const state = enableCache.get(key(conn));
+		if (state !== undefined && out >= 1 && out <= state.length) {
+			state[out - 1] = enabled;
+		}
+	});
+}
+
+/**
+ * Applies a whole desired state in one press: routes the outputs that name an
+ * input, blanks the ones marked "off", and leaves nulls untouched.
+ *
+ * Outputs wanting the same input are batched into a single SW command, because
+ * the protocol takes a list — fewer commands means less to go wrong and a
+ * visibly cleaner transition than switching screens one at a time.
+ */
+export function applyLayout(conn: MatrixConnection, targets: OutputTarget[]): Promise<void> {
+	return enqueue(conn, async () => {
+		const routes = await getRoutes(conn);
+		const enabled = enableCache.get(key(conn)) ?? (await getOutputEnabled(conn, routes.length));
+
+		for (let i = 0; i < targets.length; i++) {
+			const target = targets[i];
+			if (typeof target === "number" && (i + 1 > routes.length || target < 1)) {
+				throw new MatrixError(`Output ${i + 1} / input ${target} is out of range`);
+			}
+		}
+
+		// Group outputs by the input they want, so each input costs one command.
+		const byInput = new Map<number, number[]>();
+		for (let i = 0; i < targets.length; i++) {
+			const target = targets[i];
+			if (typeof target !== "number" || routes[i] === target) {
+				continue; // Not a routing change, or already showing that input.
+			}
+			const outs = byInput.get(target);
+			if (outs === undefined) {
+				byInput.set(target, [i + 1]);
+			} else {
+				outs.push(i + 1);
+			}
+		}
+
+		const updated = [...routes];
+		for (const [input, outs] of byInput) {
+			await assertOk(conn, `SW ${input} ${outs.join(" ")}`);
+			for (const out of outs) {
+				updated[out - 1] = input;
+			}
+		}
+		routeCache.set(key(conn), { at: Date.now(), routes: updated });
+
+		// Only touch the outputs whose lit/blank state actually differs.
+		for (let i = 0; i < targets.length; i++) {
+			const target = targets[i];
+			if (target === null || target === undefined) {
+				continue;
+			}
+			const want = target !== "off";
+			if (enabled[i] === want) {
+				continue;
+			}
+			await assertOk(conn, `SetOutput ${i + 1} ${want ? 1 : 0}`);
+			enabled[i] = want;
+		}
+		enableCache.set(key(conn), enabled);
+	});
+}
+
+/**
+ * Lights any dark outputs. Callers must already hold the write queue — going
+ * through setOutputEnabled here would re-enter enqueue and deadlock on itself.
+ */
+async function lightAllInline(conn: MatrixConnection, outputs: number): Promise<void> {
+	const k = key(conn);
+	const enabled = enableCache.get(k) ?? (await getOutputEnabled(conn, outputs));
+	for (let i = 0; i < outputs; i++) {
+		if (!enabled[i]) {
+			await assertOk(conn, `SetOutput ${i + 1} 1`);
+			enabled[i] = true;
+		}
+	}
+	enableCache.set(k, enabled);
+}
+
+/** Lights every output, undoing any blanking. */
+export function enableAllOutputs(conn: MatrixConnection, outputs: number): Promise<void> {
+	return enqueue(conn, () => lightAllInline(conn, outputs));
 }
 
 /** Reads the matrix's advertised input/output counts. */

@@ -61,6 +61,22 @@
 			]
 		},
 		{
+			"Name": "Layout",
+			"UUID": "com.dgshue.mtviki.layout",
+			"Icon": "imgs/actions/layout/icon",
+			"Tooltip": "Apply a whole arrangement in one press: route some screens, blank others, leave the rest alone.",
+			"PropertyInspectorPath": "ui/layout.html",
+			"Controllers": ["Keypad"],
+			"UserTitleEnabled": false,
+			"States": [
+				{
+					"Image": "imgs/actions/layout/key",
+					"TitleAlignment": "bottom",
+					"FontSize": 12
+				}
+			]
+		},
+		{
 			"Name": "Set Route",
 			"UUID": "com.dgshue.mtviki.route",
 			"Icon": "imgs/actions/route/icon",

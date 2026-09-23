@@ -6,14 +6,16 @@ siblings sharing the same LAN module) from an Elgato Stream Deck.
 The headline action is **Swap Pair**: one key exchanges the two sources feeding
 a pair of outputs. Put one key on outputs 1/2 and another on outputs 3/4 and you
 get "swap left" and "swap right" — each side flips top/bottom independently,
-whatever is currently on them. **Reset to Default** puts everything back.
+whatever is currently on them. **Layout** applies a whole arrangement at once —
+route some screens, blank others — and **Reset to Default** puts everything back.
 
 ## Actions
 
 | Action | What it does |
 | --- | --- |
 | **Swap Pair** | Exchanges the sources on two outputs. Key title shows `input on A / input on B`, refreshed on a timer. |
-| **Reset to Default** | Restores the one-to-one map (1→1, 2→2, …) in a single `SWOTO`. Key title shows the current map, or a tick when already at default. |
+| **Layout** | Applies a whole arrangement in one press: each screen is routed to an input, blanked, or left alone. Key title shows the live map, `·` for a blanked screen. |
+| **Reset to Default** | Restores the one-to-one map (1→1, 2→2, …) in a single `SWOTO`, and relights any blanked screens. Key title shows the current map, or a tick when already at default. |
 | **Set Route** | Sends one input to a fixed set of outputs. |
 
 Connection settings (host, username, password) are **global** — set them once on
@@ -48,6 +50,14 @@ and the CGI parses it that way.
 | `GETNVRAM` + `FIELD` | `{"<field>":"<value>"}` | Read config, e.g. `MatrixMaxIn` |
 
 Inputs and outputs are 1-based throughout.
+
+### Blanking is separate from routing
+
+`SetOutput <n> 0` blanks a screen without changing what it is routed to, and the
+state is readable back as the NVRAM field `Output<n>Enable` (`"1"` lit, `"0"`
+dark). It also **survives `SWOTO`** — restoring the default routing does not
+relight a blanked screen, so anything calling itself a reset has to enable the
+outputs too. `resetIdentity()` does.
 
 ### The timing trap
 
