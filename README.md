@@ -6,13 +6,14 @@ siblings sharing the same LAN module) from an Elgato Stream Deck.
 The headline action is **Swap Pair**: one key exchanges the two sources feeding
 a pair of outputs. Put one key on outputs 1/2 and another on outputs 3/4 and you
 get "swap left" and "swap right" — each side flips top/bottom independently,
-whatever is currently on them.
+whatever is currently on them. **Reset to Default** puts everything back.
 
 ## Actions
 
 | Action | What it does |
 | --- | --- |
 | **Swap Pair** | Exchanges the sources on two outputs. Key title shows `input on A / input on B`, refreshed on a timer. |
+| **Reset to Default** | Restores the one-to-one map (1→1, 2→2, …) in a single `SWOTO`. Key title shows the current map, or a tick when already at default. |
 | **Set Route** | Sends one input to a fixed set of outputs. |
 
 Connection settings (host, username, password) are **global** — set them once on

@@ -183,6 +183,31 @@ export function route(conn: MatrixConnection, input: number, outputs: number[]):
 }
 
 /**
+ * Restores the default one-to-one map: input 1 to output 1, 2 to 2, and so on.
+ *
+ * The matrix does this in a single SWOTO, so it lands as one clean switch
+ * rather than N separate SW commands.
+ */
+export function resetIdentity(conn: MatrixConnection): Promise<number[]> {
+	return enqueue(conn, async () => {
+		const known = routeCache.get(key(conn))?.routes.length;
+		await assertOk(conn, "SWOTO");
+
+		if (known === undefined) {
+			// Output count unknown, so there is no map to record optimistically.
+			invalidate(conn);
+			return [];
+		}
+
+		// The resulting map is exactly known, so record it instead of forcing a
+		// read inside the settle window.
+		const routes = Array.from({ length: known }, (_, i) => i + 1);
+		routeCache.set(key(conn), { at: Date.now(), routes });
+		return routes;
+	});
+}
+
+/**
  * Exchanges the sources feeding two outputs and returns the resulting routing.
  *
  * There is no atomic swap in the protocol, so this reads the current map and

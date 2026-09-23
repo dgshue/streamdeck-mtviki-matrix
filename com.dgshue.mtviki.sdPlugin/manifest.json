@@ -45,6 +45,22 @@
 			]
 		},
 		{
+			"Name": "Reset to Default",
+			"UUID": "com.dgshue.mtviki.identity",
+			"Icon": "imgs/actions/identity/icon",
+			"Tooltip": "Put every screen back in its place: input 1 to output 1, 2 to 2, and so on.",
+			"PropertyInspectorPath": "ui/identity.html",
+			"Controllers": ["Keypad"],
+			"UserTitleEnabled": false,
+			"States": [
+				{
+					"Image": "imgs/actions/identity/key",
+					"TitleAlignment": "bottom",
+					"FontSize": 12
+				}
+			]
+		},
+		{
 			"Name": "Set Route",
 			"UUID": "com.dgshue.mtviki.route",
 			"Icon": "imgs/actions/route/icon",

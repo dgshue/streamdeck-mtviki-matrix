@@ -131,6 +131,17 @@ function routeArt(c, withBg) {
 	paint(c, roundRect(0.66, 0.66, 0.94, 0.88, 0.04), FG);
 }
 
+/** Straight parallel runs, left to right: "everything back where it belongs". */
+function identityArt(c, withBg) {
+	if (withBg) paint(c, roundRect(0, 0, 1, 1, 0.14), BG);
+	const rows = [0.22, 0.5, 0.78];
+	for (const y of rows) {
+		paint(c, roundRect(0.08, y - 0.08, 0.26, y + 0.08, 0.03), ACCENT);
+		paint(c, roundRect(0.26, y - 0.03, 0.74, y + 0.03, 0.0), FG);
+		paint(c, roundRect(0.74, y - 0.08, 0.92, y + 0.08, 0.03), FG);
+	}
+}
+
 const jobs = [
 	["com.dgshue.mtviki.sdPlugin/imgs/plugin/marketplace.png", 288, swapArt, true],
 	["com.dgshue.mtviki.sdPlugin/imgs/plugin/category-icon.png", 28, swapArt, false],
@@ -139,6 +150,10 @@ const jobs = [
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/swap/icon@2x.png", 40, swapArt, false],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/swap/key.png", 72, swapArt, true],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/swap/key@2x.png", 144, swapArt, true],
+	["com.dgshue.mtviki.sdPlugin/imgs/actions/identity/icon.png", 20, identityArt, false],
+	["com.dgshue.mtviki.sdPlugin/imgs/actions/identity/icon@2x.png", 40, identityArt, false],
+	["com.dgshue.mtviki.sdPlugin/imgs/actions/identity/key.png", 72, identityArt, true],
+	["com.dgshue.mtviki.sdPlugin/imgs/actions/identity/key@2x.png", 144, identityArt, true],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/route/icon.png", 20, routeArt, false],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/route/icon@2x.png", 40, routeArt, false],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/route/key.png", 72, routeArt, true],

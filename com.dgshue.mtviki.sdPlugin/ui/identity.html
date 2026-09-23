@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<script src="sdpi-components.js"></script>
+	</head>
+	<body>
+		<sdpi-item label="Label">
+			<sdpi-textfield setting="label" placeholder="RESET" maxlength="8"></sdpi-textfield>
+		</sdpi-item>
+
+		<sdpi-item label="Refresh">
+			<sdpi-select setting="pollSeconds" default="5">
+				<option value="0">Off</option>
+				<option value="3">Every 3s</option>
+				<option value="5">Every 5s</option>
+				<option value="15">Every 15s</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<details>
+			<summary>Matrix connection (shared by all keys)</summary>
+			<sdpi-item label="Host">
+				<sdpi-textfield global setting="host" placeholder="192.168.2.200"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Username">
+				<sdpi-textfield global setting="username" placeholder="admin"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Password">
+				<sdpi-password global setting="password" placeholder="admin"></sdpi-password>
+			</sdpi-item>
+		</details>
+
+		<p class="sdpi-info">
+			Press restores input 1 to output 1, 2 to 2, and so on. The key shows the
+			current map, or a tick when it is already at the default.
+		</p>
+	</body>
+</html>
