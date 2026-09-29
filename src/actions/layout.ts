@@ -7,8 +7,10 @@ import {
 	type WillDisappearEvent,
 } from "@elgato/streamdeck";
 import streamDeck from "@elgato/streamdeck";
+import type { JsonValue, SendToPluginEvent } from "@elgato/streamdeck";
 
 import { setVcp } from "../ddc";
+import { handlePiDatasource } from "../pi-datasource";
 import { applyLayout, getOutputEnabled, getRoutes, type OutputTarget } from "../matrix";
 import { getConnection } from "../settings";
 
@@ -41,6 +43,11 @@ const DEFAULT_POLL_SECONDS = 5;
  */
 @action({ UUID: "com.dgshue.mtviki.layout" })
 export class Layout extends SingletonAction<LayoutSettings> {
+	/** Populates the monitor and input dropdowns from live hardware. */
+	override async onSendToPlugin(ev: SendToPluginEvent<JsonValue, LayoutSettings>): Promise<void> {
+		await handlePiDatasource(ev);
+	}
+
 	readonly #timers = new Map<string, NodeJS.Timeout>();
 
 	override async onWillAppear(ev: WillAppearEvent<LayoutSettings>): Promise<void> {

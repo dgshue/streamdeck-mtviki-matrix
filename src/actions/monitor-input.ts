@@ -1,7 +1,9 @@
 import { action, SingletonAction, type KeyUpEvent } from "@elgato/streamdeck";
 import streamDeck from "@elgato/streamdeck";
+import type { JsonValue, SendToPluginEvent } from "@elgato/streamdeck";
 
 import { setVcp } from "../ddc";
+import { handlePiDatasource } from "../pi-datasource";
 
 export type MonitorInputSettings = {
 	/** Substring of the monitor's capability string, e.g. "U2414H". */
@@ -20,6 +22,11 @@ export type MonitorInputSettings = {
  */
 @action({ UUID: "com.dgshue.mtviki.monitor" })
 export class MonitorInput extends SingletonAction<MonitorInputSettings> {
+	/** Populates the monitor and input dropdowns from live hardware. */
+	override async onSendToPlugin(ev: SendToPluginEvent<JsonValue, MonitorInputSettings>): Promise<void> {
+		await handlePiDatasource(ev);
+	}
+
 	override async onKeyUp(ev: KeyUpEvent<MonitorInputSettings>): Promise<void> {
 		const match = ev.payload.settings.match?.trim() ?? "";
 		const value = Number.parseInt(String(ev.payload.settings.value ?? ""), 10);

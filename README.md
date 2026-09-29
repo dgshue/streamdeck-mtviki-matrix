@@ -90,6 +90,18 @@ every Windows install, and cached in `%LOCALAPPDATA%\com.dgshue.mtviki\`, keyed
 by a hash of the source. No native Node addon — one of those would have to match
 the ABI of whichever Node the Stream Deck app bundles, and break on app updates.
 
+### The dropdowns are read from the hardware
+
+Both the monitor list and the input list in the property inspector are built by
+querying the attached monitors, not typed in. Two reasons: the accepted input
+values are per-model (see below), and an earlier version used placeholder text
+for the monitor field — which renders grey and looks identical to a saved value.
+A key sat there looking configured while the setting was empty, so the DDC step
+was silently skipped and the press did nothing visible.
+
+A monitor already on an unreachable input will not appear in the list at all,
+which is itself the honest answer: it cannot be commanded from here.
+
 ### Ask the monitor, don't guess
 
 Input source is VCP feature `0x60`, but the accepted values are per-model. The

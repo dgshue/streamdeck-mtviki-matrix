@@ -221,3 +221,97 @@ export async function getVcp(target: Omit<DdcTarget, "value">): Promise<{ curren
 	const reply = await invoke(args, match !== "" ? RESOLVE_TIMEOUT_MS : CALL_TIMEOUT_MS);
 	return { current: reply.current ?? 0, max: reply.max ?? 0 };
 }
+
+/** An option for a property-inspector dropdown. */
+export type PiItem = { label: string; value: string; disabled?: boolean };
+
+/** MCCS 0x60 input-source values. 0x1B is the common vendor code for USB-C. */
+const INPUT_NAMES = new Map<number, string>([
+	[0x01, "VGA 1"],
+	[0x02, "VGA 2"],
+	[0x03, "DVI 1"],
+	[0x04, "DVI 2"],
+	[0x0c, "Component 1"],
+	[0x0f, "DisplayPort 1"],
+	[0x10, "DisplayPort 2 / mDP"],
+	[0x11, "HDMI 1"],
+	[0x12, "HDMI 2"],
+	[0x1b, "USB-C / DP alt"],
+]);
+
+type RawMonitor = { index?: number; capabilities?: string | null };
+
+function model(caps: string): string | null {
+	return /model\(([^)]+)\)/.exec(caps)?.[1] ?? null;
+}
+
+/** The values a monitor lists for VCP 0x60, from its own capability string. */
+function supportedInputs(caps: string): number[] {
+	// e.g. "... 60( 0F 10 11 12) AA(01 02 04) ..."
+	const block = /[^0-9A-Fa-f]60\(([^)]*)\)/.exec(caps)?.[1];
+	if (block === undefined) {
+		return [];
+	}
+	return block
+		.trim()
+		.split(/\s+/)
+		.map((hex) => Number.parseInt(hex, 16))
+		.filter((n) => Number.isFinite(n));
+}
+
+/**
+ * Monitors that can actually be driven, for the property inspector.
+ *
+ * Only DDC-capable ones are listed: a monitor with no capability string cannot
+ * be matched or commanded, so offering it would just build a key that fails.
+ */
+export async function monitorChoices(): Promise<PiItem[]> {
+	const items: PiItem[] = [];
+	for (const raw of (await listMonitors()) as RawMonitor[]) {
+		const caps = raw.capabilities;
+		if (typeof caps !== "string") {
+			continue;
+		}
+		const name = model(caps);
+		if (name !== null) {
+			items.push({ label: name, value: name });
+		}
+	}
+	if (items.length === 0) {
+		items.push({
+			label: "No DDC/CI monitor found — is it on another input?",
+			value: "",
+			disabled: true,
+		});
+	}
+	return items;
+}
+
+/**
+ * Input sources to offer. Filtered to what the monitor reports it accepts, so a
+ * key cannot be pointed at an input that does not exist. Falls back to the full
+ * standard list when no monitor is reachable, so the key stays configurable.
+ */
+export async function inputChoices(): Promise<PiItem[]> {
+	const label = (code: number): string =>
+		`${INPUT_NAMES.get(code) ?? `Input 0x${code.toString(16).toUpperCase()}`} (0x${code
+			.toString(16)
+			.toUpperCase()
+			.padStart(2, "0")})`;
+
+	try {
+		for (const raw of (await listMonitors()) as RawMonitor[]) {
+			const caps = raw.capabilities;
+			if (typeof caps !== "string") {
+				continue;
+			}
+			const codes = supportedInputs(caps);
+			if (codes.length > 0) {
+				return codes.map((code) => ({ label: label(code), value: String(code) }));
+			}
+		}
+	} catch {
+		// Fall through to the standard list rather than leaving the field empty.
+	}
+	return [...INPUT_NAMES.keys()].map((code) => ({ label: label(code), value: String(code) }));
+}
