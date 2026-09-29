@@ -14,9 +14,10 @@ route some screens, blank others — and **Reset to Default** puts everything ba
 | Action | What it does |
 | --- | --- |
 | **Swap Pair** | Exchanges the sources on two outputs. Key title shows `input on A / input on B`, refreshed on a timer. |
-| **Layout** | Applies a whole arrangement in one press: each screen is routed to an input, blanked, or left alone. Key title shows the live map, `·` for a blanked screen. |
+| **Layout** | Applies a whole arrangement in one press: each screen is routed to an input, blanked, or left alone. Optionally also switches a monitor's own input over DDC/CI. Key title shows the live map, `·` for a blanked screen. |
 | **Reset to Default** | Restores the one-to-one map (1→1, 2→2, …) in a single `SWOTO`, and relights any blanked screens. Key title shows the current map, or a tick when already at default. |
 | **Set Route** | Sends one input to a fixed set of outputs. |
+| **Monitor Input** | Switches a monitor's own input source over DDC/CI. Also the way back if a screen ends up on a dead input. |
 
 Connection settings (host, username, password) are **global** — set them once on
 any key and every key uses them. Defaults are `192.168.2.200` / `admin` / `admin`.
@@ -75,6 +76,63 @@ reading inside the settle window and trusting its own optimistic map instead
 (`SETTLE_MS` / `CACHE_TTL_MS` in [`src/matrix.ts`](src/matrix.ts)). Writes are
 also serialised per host so two keys pressed together cannot interleave.
 
+## DDC/CI monitor control
+
+A matrix moves sources between screens, but a screen wired to something *else*
+as well — a laptop on DP, a console on its second HDMI — also has its own input
+to switch. **Layout** can do both in one press, and runs them concurrently
+because the matrix and the monitor are independent devices.
+
+Control goes through `scripts/DdcCtl.cs`, a small C# console app that calls
+`dxva2.dll` (`GetPhysicalMonitorsFromHMONITOR` / `SetVCPFeature`). It is
+compiled on first use by the `csc.exe` that ships with the .NET Framework on
+every Windows install, and cached in `%LOCALAPPDATA%\com.dgshue.mtviki\`, keyed
+by a hash of the source. No native Node addon — one of those would have to match
+the ABI of whichever Node the Stream Deck app bundles, and break on app updates.
+
+### Ask the monitor, don't guess
+
+Input source is VCP feature `0x60`, but the accepted values are per-model. The
+monitor will tell you: `ddcctl list` returns its capability string, e.g. for a
+Dell U2414H
+
+```
+model(U2414H)...vcp(02 04 05 08 10 12 14(...) 16 18 1A 52 60( 0F 10 11 12) ...)
+```
+
+`60( 0F 10 11 12)` is the whole answer — DP-1, mDP-2, HDMI-1, HDMI-2, and
+nothing else. Offering a value outside that list is how you end up on a dead
+input. Some panels also ignore `0x60` entirely and use a vendor code instead.
+
+### Resolve by model, then cache
+
+Monitors are selected by a substring of the capability string (the model), not
+by display number, because `EnumDisplayMonitors` order shifts when displays are
+replugged and an index would silently drive the wrong panel.
+
+That costs something, though — measured on a U2414H:
+
+| Call | Time |
+| --- | --- |
+| get/set by index | **~95ms** |
+| get/set by model match | **~1450ms** |
+
+The entire difference is reading capability strings, a slow multi-packet I2C
+transfer. So the plugin resolves by model once, caches the index, and re-resolves
+only when a call fails or the display count changes. First press ~1.5s, every
+press after ~95ms.
+
+For reference, doing the same work in PowerShell via `Add-Type` costs ~2.2s per
+call — ~0.5s interpreter startup plus ~1.7s recompiling the C# every time. That
+is what the cached exe exists to avoid.
+
+### Caveat
+
+If you switch a monitor to an input with nothing feeding it, that screen goes
+dark and the **Monitor Input** key (or the monitor's OSD) is the way back.
+Whether DDC/CI still answers while the monitor is displaying a *different* input
+is firmware-dependent — worth testing on your own panel before relying on it.
+
 ## Build
 
 ```bash
@@ -92,3 +150,10 @@ Output lands in `com.dgshue.mtviki.sdPlugin/bin/`. Copy or symlink that
 then restart Stream Deck. Regenerate the icons with `node tools/make-icons.mjs`.
 
 Set `MTVIKI_TRACE=1` to log every command the plugin sends.
+
+To drive the DDC helper by hand:
+
+```bash
+C:/Windows/Microsoft.NET/Framework64/v4.0.30319/csc.exe /out:ddcctl.exe com.dgshue.mtviki.sdPlugin/scripts/DdcCtl.cs
+./ddcctl.exe list
+```

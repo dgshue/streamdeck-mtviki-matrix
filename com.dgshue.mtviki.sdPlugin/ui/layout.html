@@ -63,6 +63,35 @@
 		</sdpi-item>
 
 		<details>
+			<summary>Also switch a monitor's input (DDC/CI)</summary>
+			<sdpi-item label="Monitor">
+				<sdpi-textfield setting="ddcMatch" placeholder="U2414H"></sdpi-textfield>
+			</sdpi-item>
+			<sdpi-item label="Input">
+				<sdpi-select setting="ddcValue" default="">
+				<option value="">(no change)</option>
+				<option value="15">DisplayPort 1 (0x0F)</option>
+				<option value="16">DisplayPort 2 / mDP (0x10)</option>
+				<option value="17">HDMI 1 (0x11)</option>
+				<option value="18">HDMI 2 (0x12)</option>
+				<option value="27">USB-C / DP alt (0x1B)</option>
+				<option value="1">VGA (0x01)</option>
+				<option value="3">DVI (0x03)</option>
+				</sdpi-select>
+			</sdpi-item>
+			<sdpi-item label="VCP code">
+				<sdpi-textfield setting="ddcCode" placeholder="0x60"></sdpi-textfield>
+			</sdpi-item>
+			<p class="sdpi-info">
+				Leave <b>Monitor</b> empty to skip this. Match any part of the model as
+				the monitor reports it, e.g. <code>U2414H</code> &mdash; steadier than a
+				display number, which moves when you replug something. Only offer inputs
+				the monitor actually lists, and make sure something is feeding the input
+				you pick.
+			</p>
+		</details>
+
+		<details>
 			<summary>Matrix connection (shared by all keys)</summary>
 			<sdpi-item label="Host">
 				<sdpi-textfield global setting="host" placeholder="192.168.2.200"></sdpi-textfield>

@@ -77,6 +77,21 @@
 			]
 		},
 		{
+			"Name": "Monitor Input",
+			"UUID": "com.dgshue.mtviki.monitor",
+			"Icon": "imgs/actions/monitor/icon",
+			"Tooltip": "Switch a monitor's own input source over DDC/CI.",
+			"PropertyInspectorPath": "ui/monitor.html",
+			"Controllers": ["Keypad"],
+			"States": [
+				{
+					"Image": "imgs/actions/monitor/key",
+					"TitleAlignment": "bottom",
+					"FontSize": 12
+				}
+			]
+		},
+		{
 			"Name": "Set Route",
 			"UUID": "com.dgshue.mtviki.route",
 			"Icon": "imgs/actions/route/icon",

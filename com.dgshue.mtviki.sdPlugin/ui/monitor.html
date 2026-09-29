@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<script src="sdpi-components.js"></script>
+	</head>
+	<body>
+		<sdpi-item label="Monitor">
+			<sdpi-textfield setting="match" placeholder="U2414H"></sdpi-textfield>
+		</sdpi-item>
+
+		<sdpi-item label="Input">
+			<sdpi-select setting="value" default="">
+				<option value="">(no change)</option>
+				<option value="15">DisplayPort 1 (0x0F)</option>
+				<option value="16">DisplayPort 2 / mDP (0x10)</option>
+				<option value="17">HDMI 1 (0x11)</option>
+				<option value="18">HDMI 2 (0x12)</option>
+				<option value="27">USB-C / DP alt (0x1B)</option>
+				<option value="1">VGA (0x01)</option>
+				<option value="3">DVI (0x03)</option>
+			</sdpi-select>
+		</sdpi-item>
+
+		<sdpi-item label="VCP code">
+			<sdpi-textfield setting="code" placeholder="0x60"></sdpi-textfield>
+		</sdpi-item>
+
+		<p class="sdpi-info">
+			Switches the monitor's own input over DDC/CI. Match any part of the model
+			as the monitor reports it, e.g. <code>U2414H</code>. Handy as a way back
+			if a layout ever leaves a screen on an input with no signal.
+		</p>
+	</body>
+</html>

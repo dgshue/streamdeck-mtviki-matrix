@@ -34,9 +34,14 @@ const roundRect = (x0, y0, x1, y1, rad) => (x, y) => {
 	return dx * dx + dy * dy <= rad * rad;
 };
 
-/** Isosceles triangle pointing "up" or "down" within the given box. */
+/** Isosceles triangle pointing "up", "down" or "right" within the given box. */
 const tri = (x0, y0, x1, y1, dir) => (x, y) => {
 	if (x < x0 || x > x1 || y < y0 || y > y1) return false;
+	if (dir === "right") {
+		const t = (x1 - x) / (x1 - x0);
+		const half = ((y1 - y0) / 2) * t;
+		return Math.abs(y - (y0 + y1) / 2) <= half;
+	}
 	const t = dir === "up" ? (y - y0) / (y1 - y0) : (y1 - y) / (y1 - y0);
 	const half = ((x1 - x0) / 2) * t;
 	const mid = (x0 + x1) / 2;
@@ -162,6 +167,20 @@ function layoutArt(c, withBg) {
 	}
 }
 
+/** A monitor on a stand with a signal arrow entering it: "switch its input". */
+function monitorArt(c, withBg) {
+	if (withBg) paint(c, roundRect(0, 0, 1, 1, 0.14), BG);
+	// Panel with an inset screen, so it reads as a display and not a plain box.
+	paint(c, roundRect(0.1, 0.16, 0.9, 0.66, 0.05), FG);
+	paint(c, roundRect(0.16, 0.22, 0.84, 0.6, 0.03), BG);
+	// Stand.
+	paint(c, roundRect(0.43, 0.66, 0.57, 0.8, 0.0), FG);
+	paint(c, roundRect(0.28, 0.8, 0.72, 0.88, 0.02), FG);
+	// Arrow feeding into the screen.
+	paint(c, roundRect(0.26, 0.38, 0.52, 0.44, 0.0), ACCENT);
+	paint(c, tri(0.5, 0.29, 0.74, 0.53, "right"), ACCENT);
+}
+
 const jobs = [
 	["com.dgshue.mtviki.sdPlugin/imgs/plugin/marketplace.png", 288, swapArt, true],
 	["com.dgshue.mtviki.sdPlugin/imgs/plugin/category-icon.png", 28, swapArt, false],
@@ -170,6 +189,10 @@ const jobs = [
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/swap/icon@2x.png", 40, swapArt, false],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/swap/key.png", 72, swapArt, true],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/swap/key@2x.png", 144, swapArt, true],
+	["com.dgshue.mtviki.sdPlugin/imgs/actions/monitor/icon.png", 20, monitorArt, false],
+	["com.dgshue.mtviki.sdPlugin/imgs/actions/monitor/icon@2x.png", 40, monitorArt, false],
+	["com.dgshue.mtviki.sdPlugin/imgs/actions/monitor/key.png", 72, monitorArt, true],
+	["com.dgshue.mtviki.sdPlugin/imgs/actions/monitor/key@2x.png", 144, monitorArt, true],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/layout/icon.png", 20, layoutArt, false],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/layout/icon@2x.png", 40, layoutArt, false],
 	["com.dgshue.mtviki.sdPlugin/imgs/actions/layout/key.png", 72, layoutArt, true],

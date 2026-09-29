@@ -8,6 +8,7 @@ import {
 } from "@elgato/streamdeck";
 import streamDeck from "@elgato/streamdeck";
 
+import { setVcp } from "../ddc";
 import { applyLayout, getOutputEnabled, getRoutes, type OutputTarget } from "../matrix";
 import { getConnection } from "../settings";
 
@@ -22,6 +23,13 @@ export type LayoutSettings = {
 	out4?: string;
 	label?: string;
 	pollSeconds?: number;
+	/**
+	 * Optional DDC/CI step: also switch a monitor's own input source, for a
+	 * screen that is wired to something besides the matrix. Empty match = off.
+	 */
+	ddcMatch?: string;
+	ddcCode?: string;
+	ddcValue?: string;
 };
 
 const MAX_OUTPUTS = 4;
@@ -57,15 +65,41 @@ export class Layout extends SingletonAction<LayoutSettings> {
 			return;
 		}
 
-		try {
-			await applyLayout(await getConnection(), targets);
-			await this.#render(ev);
-			await ev.action.showOk();
-		} catch (err) {
-			streamDeck.logger.error("Applying layout failed", err);
+		// The matrix and the monitor are independent devices, so run both at once
+		// rather than making the key wait for the sum of two round trips.
+		const [matrixResult, ddcResult] = await Promise.allSettled([
+			applyLayout(await getConnection(), targets),
+			this.#switchMonitorInput(ev.payload.settings),
+		]);
+
+		if (matrixResult.status === "rejected") {
+			streamDeck.logger.error("Applying layout failed", matrixResult.reason);
 			await ev.action.setTitle(titleFor(ev.payload.settings, null, null));
 			await ev.action.showAlert();
+			return;
 		}
+
+		await this.#render(ev);
+
+		if (ddcResult.status === "rejected") {
+			// The matrix did switch, so this is a partial success: warn, but do not
+			// pretend the whole press failed.
+			streamDeck.logger.error("Monitor input switch failed", ddcResult.reason);
+			await ev.action.showAlert();
+			return;
+		}
+
+		await ev.action.showOk();
+	}
+
+	/** No-ops unless a monitor match is configured. */
+	async #switchMonitorInput(settings: LayoutSettings): Promise<void> {
+		const match = settings.ddcMatch?.trim() ?? "";
+		const value = Number.parseInt(String(settings.ddcValue ?? ""), 10);
+		if (match === "" || !Number.isFinite(value)) {
+			return;
+		}
+		await setVcp({ match, code: settings.ddcCode?.trim() || "0x60", value });
 	}
 
 	#schedule(ev: WillAppearEvent<LayoutSettings> | DidReceiveSettingsEvent<LayoutSettings>): void {
