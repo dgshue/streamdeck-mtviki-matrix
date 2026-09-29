@@ -31,10 +31,21 @@ export class MonitorInput extends SingletonAction<MonitorInputSettings> {
 		}
 
 		try {
-			await setVcp({ match, code: ev.payload.settings.code?.trim() || "0x60", value });
+			const result = await setVcp({ match, code: ev.payload.settings.code?.trim() || "0x60", value });
+			streamDeck.logger.info(
+				result.changed
+					? `${match}: input ${result.previous} -> ${value}`
+					: `${match}: already on input ${value}`,
+			);
 			await ev.action.showOk();
 		} catch (err) {
-			streamDeck.logger.error(`Switching ${match} to input ${value} failed`, err);
+			// The commonest cause is the monitor already showing an input whose
+			// DDC we cannot reach, which looks identical to the monitor being off.
+			streamDeck.logger.error(
+				`Could not reach ${match} to switch to input ${value}. If it is already on `
+					+ `another input, DDC may be unreachable until it is switched back at the OSD.`,
+				err,
+			);
 			await ev.action.showAlert();
 		}
 	}

@@ -17,7 +17,7 @@ route some screens, blank others — and **Reset to Default** puts everything ba
 | **Layout** | Applies a whole arrangement in one press: each screen is routed to an input, blanked, or left alone. Optionally also switches a monitor's own input over DDC/CI. Key title shows the live map, `·` for a blanked screen. |
 | **Reset to Default** | Restores the one-to-one map (1→1, 2→2, …) in a single `SWOTO`, and relights any blanked screens. Key title shows the current map, or a tick when already at default. |
 | **Set Route** | Sends one input to a fixed set of outputs. |
-| **Monitor Input** | Switches a monitor's own input source over DDC/CI. Also the way back if a screen ends up on a dead input. |
+| **Monitor Input** | Switches a monitor's own input source over DDC/CI. Note the one-way caveat below. |
 
 Connection settings (host, username, password) are **global** — set them once on
 any key and every key uses them. Defaults are `192.168.2.200` / `admin` / `admin`.
@@ -126,12 +126,32 @@ For reference, doing the same work in PowerShell via `Add-Type` costs ~2.2s per
 call — ~0.5s interpreter startup plus ~1.7s recompiling the C# every time. That
 is what the cached exe exists to avoid.
 
-### Caveat
+### One-way switching, and why
 
-If you switch a monitor to an input with nothing feeding it, that screen goes
-dark and the **Monitor Input** key (or the monitor's OSD) is the way back.
-Whether DDC/CI still answers while the monitor is displaying a *different* input
-is firmware-dependent — worth testing on your own panel before relying on it.
+Measured on this setup — a PC driving a U2414H directly on DisplayPort, plus an
+MT-VIKI matrix feeding that monitor's HDMI 1:
+
+- **The matrix terminates DDC/EDID.** It appears to Windows as its own display
+  ("HDMI Matrix") reporting no capability string, even with real monitors on its
+  outputs. Nothing downstream of it is reachable over DDC.
+- **The U2414H serves MCCS only on its active input.** The instant it switched to
+  HDMI 1, DDC over DisplayPort went silent — and stayed silent, though Windows
+  still listed the display as connected.
+
+Together those mean switching a monitor onto a matrix-fed input is a **one-way
+trip**: its DDC endpoint moves behind the matrix, so no key can bring it back.
+Only the monitor's OSD can. Plan layouts accordingly, or feed the direct output
+into the matrix instead and let the matrix do all the switching.
+
+### `result: true` is not proof
+
+`SetVCPFeature` returns success even when the DDC channel is dead — a monitor
+already on an unreachable input will "accept" a command it never received. So
+`setVcp()` reads the feature back *before* writing: that read is the only honest
+test of whether the monitor is reachable, and it makes a no-op press free.
+
+The read cannot come *after* the write, because on a monitor like this one,
+switching away is precisely what takes DDC offline.
 
 ## Build
 

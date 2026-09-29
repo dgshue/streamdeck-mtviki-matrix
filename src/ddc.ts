@@ -152,50 +152,62 @@ function monitorCount(reply: Reply): number {
 	return typeof reply.monitors === "number" ? reply.monitors : 0;
 }
 
+/** Learns which display index a model match refers to, caching the answer. */
+async function resolveIndex(match: string, code: string): Promise<number> {
+	const hit = resolved.get(match);
+	if (hit !== undefined) {
+		return hit.index;
+	}
+	const reply = await invoke(["get", "--match", match, "--code", code], RESOLVE_TIMEOUT_MS);
+	const index = reply.index ?? 0;
+	resolved.set(match, { index, monitors: monitorCount(reply) });
+	return index;
+}
+
+export type VcpChange = { changed: boolean; previous: number };
+
 /**
  * Sets a VCP feature, typically input source (0x60).
  *
- * Resolves the monitor by model on the first call, then reuses the index. If
- * the fast path fails, or the display count has changed, it re-resolves once
- * and retries rather than leaving the key permanently broken.
+ * Reads the feature back first, for two reasons. SetVCPFeature returns success
+ * even when the DDC channel is dead — a monitor already showing another input
+ * will happily "accept" a command it never received — so a prior read is the
+ * only way to know the monitor is actually reachable and report honestly. It
+ * also makes a press that changes nothing free.
+ *
+ * Note the read cannot be done *after* the write: on a monitor that serves MCCS
+ * only on its active input, switching away is exactly what takes DDC offline.
  */
-export async function setVcp(target: DdcTarget): Promise<void> {
+export async function setVcp(target: DdcTarget): Promise<VcpChange> {
 	const code = target.code?.trim() || "0x60";
-	const value = String(target.value);
 	const match = target.match?.trim() ?? "";
 
-	if (match === "") {
+	const attempt = async (index: number): Promise<VcpChange> => {
+		const before = await invoke(["get", "--index", String(index), "--code", code], CALL_TIMEOUT_MS);
+		if (before.current === target.value) {
+			return { changed: false, previous: before.current };
+		}
 		await invoke(
-			["set", "--index", String(target.index ?? 0), "--code", code, "--value", value],
+			["set", "--index", String(index), "--code", code, "--value", String(target.value)],
 			CALL_TIMEOUT_MS,
 		);
-		return;
+		return { changed: true, previous: before.current ?? -1 };
+	};
+
+	if (match === "") {
+		return attempt(target.index ?? 0);
 	}
 
-	const hit = resolved.get(match);
-	if (hit !== undefined) {
-		try {
-			const reply = await invoke(
-				["set", "--index", String(hit.index), "--code", code, "--value", value],
-				CALL_TIMEOUT_MS,
-			);
-			if (monitorCount(reply) === hit.monitors) {
-				return;
-			}
-			// Display count moved: that set may have hit the wrong panel, so fall
-			// through and re-resolve before trusting the index again.
-			resolved.delete(match);
-		} catch {
-			resolved.delete(match);
+	try {
+		return await attempt(await resolveIndex(match, code));
+	} catch (err) {
+		// A cached index can go stale when displays are replugged. Re-resolve once
+		// before giving up, so the key heals itself instead of staying broken.
+		if (!resolved.has(match)) {
+			throw err;
 		}
-	}
-
-	const reply = await invoke(
-		["set", "--match", match, "--code", code, "--value", value],
-		RESOLVE_TIMEOUT_MS,
-	);
-	if (typeof reply.index === "number") {
-		resolved.set(match, { index: reply.index, monitors: monitorCount(reply) });
+		resolved.delete(match);
+		return attempt(await resolveIndex(match, code));
 	}
 }
 

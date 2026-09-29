@@ -16,6 +16,14 @@ export default {
   },
   plugins: [
     { name: "watch-externals", buildStart() { this.addWatchFile(`${sdPlugin}/manifest.json`); } },
+    {
+      // The bundle is ESM, so Node needs "type": "module" beside it or it will
+      // parse plugin.js as CommonJS and fail on the first import.
+      name: "emit-module-marker",
+      generateBundle() {
+        this.emitFile({ type: "asset", fileName: "package.json", source: '{ "type": "module" }\n' });
+      },
+    },
     typescript({ mapRoot: "./" }),
     nodeResolve({ browser: false, exportConditions: ["node"], preferBuiltins: true }),
     commonjs(),
