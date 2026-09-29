@@ -102,6 +102,16 @@ was silently skipped and the press did nothing visible.
 A monitor already on an unreachable input will not appear in the list at all,
 which is itself the honest answer: it cannot be commanded from here.
 
+Both dropdowns lead with a neutral entry ("don't switch a monitor", "choose an
+input") rather than opening on a real choice. A dropdown whose only item is
+already displayed never fires a change event, so nothing is written to settings
+— the key then looks configured, skips the step, and gives no clue why. Making
+the safe option the one on display means selecting a real value is an actual
+change, and actually persists.
+
+Setting only one of the two is treated as a mistake and fails loudly, rather
+than silently skipping.
+
 ### Ask the monitor, don't guess
 
 Input source is VCP feature `0x60`, but the accepted values are per-model. The

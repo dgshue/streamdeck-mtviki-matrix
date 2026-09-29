@@ -266,7 +266,12 @@ function supportedInputs(caps: string): number[] {
  * be matched or commanded, so offering it would just build a key that fails.
  */
 export async function monitorChoices(): Promise<PiItem[]> {
-	const items: PiItem[] = [];
+	// An explicit "off" entry first, so the list does not open already showing a
+	// monitor. A single-item dropdown displays that item without firing a change
+	// event, so nothing is ever written to settings and the key silently skips
+	// the step while looking fully configured. Making the safe choice the one on
+	// display means picking a monitor is a real change, and really persists.
+	const items: PiItem[] = [{ label: "— don't switch a monitor —", value: "" }];
 	for (const raw of (await listMonitors()) as RawMonitor[]) {
 		const caps = raw.capabilities;
 		if (typeof caps !== "string") {
@@ -277,10 +282,10 @@ export async function monitorChoices(): Promise<PiItem[]> {
 			items.push({ label: name, value: name });
 		}
 	}
-	if (items.length === 0) {
+	if (items.length === 1) {
 		items.push({
 			label: "No DDC/CI monitor found — is it on another input?",
-			value: "",
+			value: "__none__",
 			disabled: true,
 		});
 	}
@@ -299,6 +304,7 @@ export async function inputChoices(): Promise<PiItem[]> {
 			.toUpperCase()
 			.padStart(2, "0")})`;
 
+	const unset: PiItem = { label: "— choose an input —", value: "" };
 	try {
 		for (const raw of (await listMonitors()) as RawMonitor[]) {
 			const caps = raw.capabilities;
@@ -307,11 +313,11 @@ export async function inputChoices(): Promise<PiItem[]> {
 			}
 			const codes = supportedInputs(caps);
 			if (codes.length > 0) {
-				return codes.map((code) => ({ label: label(code), value: String(code) }));
+				return [unset, ...codes.map((code) => ({ label: label(code), value: String(code) }))];
 			}
 		}
 	} catch {
 		// Fall through to the standard list rather than leaving the field empty.
 	}
-	return [...INPUT_NAMES.keys()].map((code) => ({ label: label(code), value: String(code) }));
+	return [unset, ...[...INPUT_NAMES.keys()].map((code) => ({ label: label(code), value: String(code) }))];
 }

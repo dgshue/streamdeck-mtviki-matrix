@@ -79,6 +79,12 @@ export class Layout extends SingletonAction<LayoutSettings> {
 			this.#switchMonitorInput(ev.payload.settings),
 		]);
 
+		// Report both halves independently. Returning early on a matrix failure
+		// used to discard the DDC outcome, which is precisely how a silently
+		// skipped monitor switch went unnoticed.
+		if (ddcResult.status === "rejected") {
+			streamDeck.logger.error("Monitor input switch failed", ddcResult.reason);
+		}
 		if (matrixResult.status === "rejected") {
 			streamDeck.logger.error("Applying layout failed", matrixResult.reason);
 			await ev.action.setTitle(titleFor(ev.payload.settings, null, null));
@@ -89,9 +95,6 @@ export class Layout extends SingletonAction<LayoutSettings> {
 		await this.#render(ev);
 
 		if (ddcResult.status === "rejected") {
-			// The matrix did switch, so this is a partial success: warn, but do not
-			// pretend the whole press failed.
-			streamDeck.logger.error("Monitor input switch failed", ddcResult.reason);
 			await ev.action.showAlert();
 			return;
 		}
@@ -103,10 +106,24 @@ export class Layout extends SingletonAction<LayoutSettings> {
 	async #switchMonitorInput(settings: LayoutSettings): Promise<void> {
 		const match = settings.ddcMatch?.trim() ?? "";
 		const value = Number.parseInt(String(settings.ddcValue ?? ""), 10);
-		if (match === "" || !Number.isFinite(value)) {
-			return;
+
+		if (match === "" && !Number.isFinite(value)) {
+			return; // Genuinely not configured; nothing to say.
 		}
-		await setVcp({ match, code: settings.ddcCode?.trim() || "0x60", value });
+		if (match === "" || !Number.isFinite(value)) {
+			// Half-configured is a mistake, not an intention. Failing loudly here is
+			// what turns "the key quietly did nothing" into something findable.
+			throw new Error(
+				`DDC step is half-configured: monitor=${JSON.stringify(settings.ddcMatch)} `
+					+ `input=${JSON.stringify(settings.ddcValue)}. Set both, or neither.`,
+			);
+		}
+		const result = await setVcp({ match, code: settings.ddcCode?.trim() || "0x60", value });
+		streamDeck.logger.info(
+			result.changed
+				? `DDC ${match}: input ${result.previous} -> ${value}`
+				: `DDC ${match}: already on input ${value}`,
+		);
 	}
 
 	#schedule(ev: WillAppearEvent<LayoutSettings> | DidReceiveSettingsEvent<LayoutSettings>): void {

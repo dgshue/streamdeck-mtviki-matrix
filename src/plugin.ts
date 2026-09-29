@@ -6,7 +6,8 @@ import { ResetIdentity } from "./actions/reset-identity";
 import { SetRoute } from "./actions/set-route";
 import { SwapPair } from "./actions/swap-pair";
 
-streamDeck.logger.setLevel(LogLevel.INFO);
+// DEBUG so INFO-level diagnostics reach the plugin log file.
+streamDeck.logger.setLevel(LogLevel.DEBUG);
 
 streamDeck.actions.registerAction(new SwapPair());
 streamDeck.actions.registerAction(new SetRoute());

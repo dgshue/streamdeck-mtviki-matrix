@@ -255,19 +255,40 @@ export type OutputTarget = number | "off" | null;
 
 /** Enable state per output, cached so a layout only writes what actually changes. */
 const enableCache = new Map<string, boolean[]>();
+const enableReadAt = new Map<string, number>();
+
+/**
+ * Enable state needs one request per output, and only changes when something
+ * writes it. Re-reading all of them on every title refresh put five requests a
+ * cycle at a device that misbehaves under sustained load, so it is cached well
+ * past the routing TTL and kept current by our own writes.
+ */
+const ENABLE_TTL_MS = 30_000;
 
 /**
  * Reads which outputs are currently lit. Blanking is separate from routing on
  * this device: a disabled output keeps its source but stops driving the screen.
  */
-export async function getOutputEnabled(conn: MatrixConnection, outputs: number): Promise<boolean[]> {
+export async function getOutputEnabled(
+	conn: MatrixConnection,
+	outputs: number,
+	maxAgeMs = ENABLE_TTL_MS,
+): Promise<boolean[]> {
+	const k = key(conn);
+	const cached = enableCache.get(k);
+	const readAt = enableReadAt.get(k) ?? 0;
+	if (cached !== undefined && cached.length === outputs && Date.now() - readAt < maxAgeMs) {
+		return cached;
+	}
+
 	await awaitSettled(conn);
 	const state: boolean[] = [];
 	for (let out = 1; out <= outputs; out++) {
 		const data = await send(conn, "GETNVRAM", { FIELD: `Output${out}Enable` });
 		state.push(data[`Output${out}Enable`] === "1");
 	}
-	enableCache.set(key(conn), state);
+	enableCache.set(k, state);
+	enableReadAt.set(k, Date.now());
 	return state;
 }
 
